@@ -1,1 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>150th Anniversary Guestbook</title>
+    <script src="https://cesium.com/downloads/cesiumjs/releases/1.114/Build/Cesium/Cesium.js"></script>
+    <link href="https://cesium.com/downloads/cesiumjs/releases/1.114/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+    <style>
+        html, body, #cesiumContainer { width: 100%; height: 100%; margin: 0; padding: 0; }
+        #formContainer {
+            position: absolute;
+            top: 10px; left: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 10px; border-radius: 8px;
+            z-index: 10; max-width: 250px;
+        }
+        input, textarea, button { width: 100%; margin-top: 5px; }
+    </style>
+</head>
+<body>
+
+    <div id="cesiumContainer"></div>
+    <div id="formContainer">
+        <h3>Sign the Guestbook</h3>
+        <input type="text" id="name" placeholder="Your Name">
+        <textarea id="message" placeholder="Your Message"></textarea>
+        <button onclick="dropPin()">Submit</button>
+    </div>
+
+    <script>
+        // Initialize Cesium
+        const viewer = new Cesium.Viewer('cesiumContainer', {
+            terrainProvider: Cesium.createWorldTerrain(),
+            animation: false, timeline: false
+        });
+
+        let userLat = null, userLon = null;
+
+        // Get user's location
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function(position) {
+                userLat = position.coords.latitude;
+                userLon = position.coords.longitude;
+                viewer.camera.flyTo({
+                    destination: Cesium.Cartesian3.fromDegrees(userLon, userLat, 15000000.0)
+                });
+            }, function(error) {
+                alert("Geolocation failed. Location will not be set.");
+            });
+        }
+
+        function dropPin() {
+            const name = document.getElementById("name").value;
+            const message = document.getElementById("message").value;
+
+            if (!userLat || !userLon) {
+                alert("Location not available yet.");
+                return;
+            }
+
+            viewer.entities.add({
+                position: Cesium.Cartesian3.fromDegrees(userLon, userLat),
+                point: {
+                    pixelSize: 10,
+                    color: Cesium.Color.RED
+                },
+                label: {
+                    text: name,
+                    font: "14pt sans-serif",
+                    fillColor: Cesium.Color.WHITE,
+                    outlineColor: Cesium.Color.BLACK,
+                    outlineWidth: 2,
+                    style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+                    verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+                    pixelOffset: new Cesium.Cartesian2(0, -15)
+                },
+                description: `<strong>${name}</strong><br>${message}`
+            });
+
+            // Clear input fields
+            document.getElementById("name").value = "";
+            document.getElementById("message").value = "";
+        }
+    </script>
+
+</body>
+</html>
 
